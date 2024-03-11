@@ -12,6 +12,7 @@
 #include <conio.h> //this is used for the movement of the player's paddle, as well as other things
 #include <stdlib.h> // this is used to clear the screen
 #include <Windows.h> //this is used to make the program sleep temporarily
+#include <utility>
 
 using namespace std;
 
@@ -274,7 +275,7 @@ void gameEnd() {
     if(currentScore > 0){}
 }
 
-void initializeGameplay();
+void initializeGameplay(Ball& ball, Paddle& pc, Paddle& cpup);
 
 //the gameplay
 void gameplay() {
@@ -307,8 +308,10 @@ void gameplay() {
     Sleep(500);
     //the above is the countdown
 
-    cin;
+    bool direction = rand() % 2;
+    if (direction == true) {
 
+    }
 
     bool isPlaying = true;
     //this while loop is the part where you actually play
@@ -327,10 +330,6 @@ void gameplay() {
     else if (ball.getPos().first > 18) {
         currentScore++;
     }
-}
-
-void initializeGameplay() {
-
 }
 
 bool isPlaying = true; //when this is set to false the program will terminate
@@ -358,6 +357,10 @@ void menu() {
             cout << "That's not a valid option!\n";
         }
     }
+}
+
+void initializeGameplay(Ball& ball, Paddle& pc, Paddle& cpup) {
+
 }
 
 //this function writes the current highscores to highscores.txt when called
