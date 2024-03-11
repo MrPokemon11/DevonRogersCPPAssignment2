@@ -2,7 +2,7 @@
 //
 
 #include <iostream>
-#include <time.h> //used to update the console after a period of time
+#include <time.h> //used to set rand() seed
 #include <iomanip>
 #include <vector>
 #include <string>
@@ -12,7 +12,8 @@
 #include <conio.h> //this is used for the movement of the player's paddle, as well as other things
 #include <stdlib.h> // this is used to clear the screen
 #include <Windows.h> //this is used to make the program sleep temporarily
-#include <utility>
+#include <utility> //has rand()
+#include <chrono>
 
 using namespace std;
 
@@ -209,7 +210,7 @@ void Leaderboard::printHighscores() {
 		while (highscores.size() > 5) {
 			highscores.pop_back();
 		}
-		
+
 		cout << endl;
 		int answer = 0;
 
@@ -232,7 +233,7 @@ void Leaderboard::printHighscores() {
 				else if (iAns < 0 || iAns > 5) {
 					cout << "That's not a valid entry!\n";
 				}
-				else if (highscores[iAns-1].second == 0) {
+				else if (highscores[iAns - 1].second == 0) {
 					cout << "That entry is already empty!\n";
 				}
 				else {
@@ -250,7 +251,7 @@ void Leaderboard::printHighscores() {
 					else {
 						continue;
 					}
-					
+
 
 				}
 			}
@@ -316,7 +317,7 @@ void Leaderboard::writeHighscoresFile() {
 
 //this function inserts a new highscore into the highscore vector
 void Leaderboard::insertHighscore(int spot, string name, int score) {
-	auto iter = highscores.begin()+spot;
+	auto iter = highscores.begin() + spot;
 	highscores.insert(iter, make_pair(name, score));
 	highscores.pop_back();
 	writeHighscoresFile();
@@ -383,13 +384,15 @@ void gameplay() {
 	//outer game loop
 	while (looping) {
 		initializeGameplay(ball, player, computer);
-		
-		int reactionTime = 100; //- (currentScore*5);
+
+		//int reactionTime = 100; //- (currentScore*5);
 		//debug
-		reactionTime = 5;
-		if (reactionTime < 250) {
+		//reactionTime = 5;
+		//if (reactionTime < 250) {
 			//reactionTime = 250;
-		}
+		//}
+
+		double timestep = 500;//the time between steps in milliseconds
 
 		int delayMod = 4;
 
@@ -399,7 +402,7 @@ void gameplay() {
 
 		//this while loop is the part where you actually play
 		while (isPlaying) {
-		
+
 			clear();
 			printVisuals();
 
@@ -409,21 +412,20 @@ void gameplay() {
 				ballXSpeed++;
 			}
 
-
 			char playerInput = 'Q';
 
-			  while (!SleepEx(reactionTime, true)){
+			std::chrono::time_point<std::chrono::system_clock> start, end;
+			std::chrono::duration<double> elapsed_seconds;
+			start = std::chrono::system_clock::now();
+			 do {
 				if (_kbhit()) {
 					playerInput = _getch();//this gets input from the user *without requiring the user to press enter, and will continue on it's own even with no input*
-					break;
+					//break;
 				}
-				else {
-					
-					playerInput = 'Q';
-					continue;
-				}
-
-			 } ;
+				
+				end = std::chrono::system_clock::now();
+				elapsed_seconds = end - start;
+			 } while (elapsed_seconds.count() < timestep/1000);
 
 
 
@@ -431,7 +433,7 @@ void gameplay() {
 				if (player.yPos > 2) {
 					player.yPos -= 1;//this moves the paddle up
 				}
-				
+
 			}
 			else if (playerInput == 's' || playerInput == 'S') {
 				if (player.yPos < 12) {
@@ -439,10 +441,10 @@ void gameplay() {
 				}
 
 			}
-			
+
 			player.drawPaddle();
 
-			
+
 			if (currentScore >= 15) {
 				delayMod = 1;
 			}
@@ -452,7 +454,7 @@ void gameplay() {
 			else if (currentScore % 2 == 0 && currentScore != 0) {
 				delayMod--;
 			}
-			
+
 			if (rand() % delayMod == 0) {
 				if (computer.yPos < ball.getPos().first && computer.yPos != 12) {
 					computer.yPos++;
@@ -473,7 +475,7 @@ void gameplay() {
 			ball.moveBall(ballXSpeed, ballYSpeed, player, computer);
 			ball.drawBall();
 
-			
+
 
 
 			//put this part at the very end
@@ -524,7 +526,7 @@ void menu() {
 			cout << "It is also recommended to zoom in, but that's not required." << endl;
 			cout << "One last thing: try to score quickly, because the ball speeds up every 6 paddle hits!" << endl;
 			cout << "Good luck!" << endl;
-			cout << endl << "Controls:\nW: Move Paddle Up\nS: Move Paddle Down\nSpace: Advance time without moving paddle" << endl;
+			cout << endl << "Controls:\nW: Move Paddle Up\nS: Move Paddle Down\n" << endl;
 
 			//this is just so that you have time to read the rules
 			string nada;
