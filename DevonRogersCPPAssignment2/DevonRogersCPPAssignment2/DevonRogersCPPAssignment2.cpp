@@ -9,7 +9,7 @@
 #include <fstream>
 #include <map>
 #include <sstream>
-#include <conio.h> //this is used for the movement of the player's paddle
+#include <conio.h> //this is used for the movement of the player's paddle, as well as other things
 
 using namespace std;
 
@@ -34,14 +34,28 @@ void loadVisuals() {
     baseState.close();
 }
 
+//prints the visuals to the console
+void printVisuals() {
+    for (int i = 0; i < visuals.size();i++) {
+        cout << visuals[i] << endl;
+    }
+}
+
 //the ball
 class Ball {
 public:
     Ball(int x, int y);
     void flipVert() { goingUp = !goingUp; };
-    void flipHorix() { goingRight = !goingRight; };
+    void flipHoriz() { goingRight = !goingRight; };
+    pair<int, int> getPos() const { return position; }
+    void resetPos() { position = make_pair(9, 7); }
+    void moveBall(int horizMult = 1,int vertMult = 1, int pPos, int cPos);//the variables are the x speed of the ball,
+                                                         //the y speed of the ball, the y pos of the player's paddle, and the y pos of the computer's paddle
+    //draws the ball into the visuals
+    void drawBall();
+
 protected:
-    //default ball position is (11,8)
+    //default ball position is (9,7) [0-indexed]
     pair<int, int> position;
     bool goingRight = true;
     bool goingUp = false;
@@ -56,14 +70,54 @@ class Paddle {
 public:
     Paddle(int pos);
     int yPos = 8;
+    //draws the paddles into the visuals
+    void drawPaddle();
+
 protected:
     int xPos;
-    int height = 3;
     int delay = 0; //currently only used by the computer player. since the cpu and the ball normally move at the same time scoring would be impossible for the player
 };
 //the paddle constructor
 Paddle::Paddle(int pos) {
     xPos = pos;
+}
+
+void Ball::moveBall(int horizMult = 1, int vertMult = 1, int pPos, int cPos) {
+    int vertDir = 1;
+    int horizDir = 1;
+    
+    for (int i = 0; i < horizMult;i++) {
+        
+        
+        //if the ball is in the third column and between 1 above and 1 below pPos OR in the 18th column and between 1 above and 1 below cPos, it reflects horizontally
+        if ((position.first == 2 && position.first >= pPos - 1 && position.first <= pPos + 1) || (position.first == 17 && position.first >= cPos - 1 && position.first <= cPos + 1)) {
+            flipHoriz();
+        }
+
+        if (goingRight == false) {
+            horizDir = -1;
+        }
+        else { horizDir = 1; }
+        position.first += horizDir;
+
+    }
+
+    for (int i = 0; i < vertMult;i++) {
+        if (position.second == 1 || position.second == 13) {
+            flipVert();
+        }
+
+        if (goingUp == false) {
+            vertDir = -1;
+        }
+        else { vertDir = 1; }
+        position.second += vertDir;
+    }
+
+    if (position.first < 1 || position.first > 18) {
+        return;
+    }
+
 }
 
 //the leaderboard
@@ -193,11 +247,12 @@ void Leaderboard::resetHighscores() {
 
 //handles the end of the game
 void gameEnd() {
+    std::
     cout << "Game over! Your score: " << currentScore << endl;
     if(currentScore > 0){}
 }
 
-
+void initializeGameplay();
 
 //the gameplay
 void gameplay() {
@@ -205,7 +260,30 @@ void gameplay() {
     Paddle player(1);
     Paddle computer(18);
     //make a ball
-    Ball ball;
+    Ball ball(9,7);
+    int ballXSpeed = 1;
+    int ballYSpeed = 1;
+
+    visuals.clear();//remove whatever is currently in the visuals
+    loadVisuals();//load visuals with the default state
+
+    bool isPlaying = true;
+    while (isPlaying) {
+        
+    }
+
+    //put this part at the very end
+    ball.moveBall(ballXSpeed,ballYSpeed,player.yPos,computer.yPos);
+    if (ball.getPos().first < 1) {
+        gameEnd();
+    }
+    else if (ball.getPos().first > 18) {
+
+    }
+}
+
+void initializeGameplay() {
+
 }
 
 bool isPlaying = true; //when this is set to false the program will terminate
@@ -223,6 +301,7 @@ void menu() {
             return;
         }
         else if (option == 1) {
+            currentScore = 0;
             gameplay();
         }
         else if (option == 2) {
