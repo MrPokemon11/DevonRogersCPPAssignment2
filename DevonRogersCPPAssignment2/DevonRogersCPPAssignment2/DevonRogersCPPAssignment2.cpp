@@ -60,7 +60,7 @@ public:
 	void flipHoriz() { goingRight = !goingRight; };
 	//remember that it is y position then x position
 	pair<int, int> getPos() const { return position; }
-	void resetPos() { position = make_pair(7, 9); }
+	void resetPos() { position = make_pair(6 + (rand() % 3), 8 + (rand() % 3)); }//reseting the ball will put it within a 3x3 box surrounding the rough center of the grid
 	void moveBall(int horizMult, int vertMult, Paddle& plyr, Paddle& cmptr);//the variables are the x speed of the ball,
 	//the y speed of the ball, the y pos of the player's paddle, and the y pos of the computer's paddle
 //draws the ball into the visuals
@@ -145,11 +145,28 @@ void Ball::moveBall(int horizMult, int vertMult, Paddle& pPos, Paddle& cPos) {
 		if ((position.second == 2 && position.first >= pPos.yPos - 1 && position.first <= pPos.yPos + 1) || (position.second == 17 && position.first >= cPos.yPos - 1 && position.first <= cPos.yPos + 1)) {
 			flipHoriz();
 			paddleHits++;
-			if (position.second == 2 && position.first == pPos.yPos - 1 || position.second == 17 && position.first >= cPos.yPos - 1) {
-				setVert(true);
+			if (position.second == 2 && position.first == pPos.yPos - 1 || position.second == 17 && position.first == cPos.yPos - 1) {
+				if (position.first != 1) {
+					setVert(true);
+				}
+
 			}
-			else if (position.second == 2 && position.first == pPos.yPos + 1 || position.second == 17 && position.first >= cPos.yPos + 1) {
-				setVert(false);
+			else if (position.second == 2 && position.first == pPos.yPos + 1 || position.second == 17 && position.first == cPos.yPos + 1) {
+				if (position.first != 13) {
+					setVert(false);
+				}
+
+			}
+		}
+		//if the ball has ended up inside the paddle, correct that
+		if (position.second == 1 && position.first == pPos.yPos - 1 || position.second == 18 && position.first == cPos.yPos - 1 || position.second == 1 && position.first == pPos.yPos + 1 || position.second == 18 && position.first == cPos.yPos + 1 || position.second == 1 && position.first == pPos.yPos || position.second == 18 && position.first == cPos.yPos ) {
+			flipHoriz();
+			flipVert();
+			if (position.second == 1) {
+				position.second = 2;
+			}
+			else {
+				position.second = 17;
 			}
 		}
 
@@ -392,7 +409,7 @@ void gameplay() {
 			//reactionTime = 250;
 		//}
 
-		double timestep = 500;//the time between steps in milliseconds
+		double timestep = 200;//the time between steps in milliseconds
 
 		int delayMod = 4;
 
@@ -408,7 +425,7 @@ void gameplay() {
 
 
 			//every 6 paddle hits, the ball speeds up.
-			if (paddleHits % 6 == 0 && paddleHits != 0) {
+			if (paddleHits % 10 == 0 && paddleHits != 0) {
 				ballXSpeed++;
 			}
 
@@ -417,15 +434,15 @@ void gameplay() {
 			std::chrono::time_point<std::chrono::system_clock> start, end;
 			std::chrono::duration<double> elapsed_seconds;
 			start = std::chrono::system_clock::now();
-			 do {
+			do {
 				if (_kbhit()) {
 					playerInput = _getch();//this gets input from the user *without requiring the user to press enter, and will continue on it's own even with no input*
 					//break;
 				}
-				
+
 				end = std::chrono::system_clock::now();
 				elapsed_seconds = end - start;
-			 } while (elapsed_seconds.count() < timestep/1000);
+			} while (elapsed_seconds.count() < timestep / 1000);
 
 
 
@@ -446,7 +463,7 @@ void gameplay() {
 
 
 			if (currentScore >= 15) {
-				delayMod = 1;
+				delayMod = 10;//this one makes it a 90% chance of moving, because a mod of 1 is impossible
 			}
 			else if (delayMod <= 2) {
 				//do nothing
@@ -455,7 +472,17 @@ void gameplay() {
 				delayMod--;
 			}
 
-			if (rand() % delayMod == 0) {
+			if (delayMod == 10) {
+				if (rand() % delayMod != 0) {
+					if (computer.yPos < ball.getPos().first && computer.yPos != 12) {
+						computer.yPos++;
+					}
+					else if (computer.yPos > ball.getPos().first && computer.yPos != 2) {
+						computer.yPos--;
+					}
+				}
+			}
+			else if (rand() % delayMod == 0) {
 				if (computer.yPos < ball.getPos().first && computer.yPos != 12) {
 					computer.yPos++;
 				}
@@ -471,8 +498,9 @@ void gameplay() {
 					computer.yPos--;
 				}
 			}
-			computer.drawPaddle();
+			Sleep(1);
 			ball.moveBall(ballXSpeed, ballYSpeed, player, computer);
+			computer.drawPaddle();
 			ball.drawBall();
 
 
@@ -522,9 +550,9 @@ void menu() {
 		else if (option == 3) {
 			cout << "Welcome to Pong! When you're done reading the rules, press enter to return to the menu." << endl;
 			cout << "In this version, your goal is to score as many points as possible before your opponent scores one." << endl;
-			cout << "While the computer starts off relatively slow, it will get faster as you score more points." << endl;
+			cout << "While the computer starts off relatively easy, it will get tougher as you score more points." << endl;
 			cout << "It is also recommended to zoom in, but that's not required." << endl;
-			cout << "One last thing: try to score quickly, because the ball speeds up every 6 paddle hits!" << endl;
+			cout << "One last thing: try to score quickly, because the ball speeds up every 10 paddle hits!" << endl;
 			cout << "Good luck!" << endl;
 			cout << endl << "Controls:\nW: Move Paddle Up\nS: Move Paddle Down\n" << endl;
 
