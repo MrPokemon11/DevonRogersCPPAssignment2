@@ -10,10 +10,17 @@
 #include <map>
 #include <sstream>
 #include <conio.h> //this is used for the movement of the player's paddle, as well as other things
+#include <stdlib.h> // this is used to clear the screen
+#include <Windows.h> //this is used to make the program sleep temporarily
 
 using namespace std;
 
 unsigned int currentScore = 0;
+
+//a shortened version of system("cls") because i'm gonna be writing that multiple times
+void clear() {
+    system("cls");
+}
 
 vector<string> visuals;
 
@@ -49,7 +56,7 @@ public:
     void flipHoriz() { goingRight = !goingRight; };
     pair<int, int> getPos() const { return position; }
     void resetPos() { position = make_pair(9, 7); }
-    void moveBall(int horizMult = 1,int vertMult = 1, int pPos, int cPos);//the variables are the x speed of the ball,
+    void moveBall(int horizMult = 1,int vertMult = 1, int pPos = -1, int cPos = -1);//the variables are the x speed of the ball,
                                                          //the y speed of the ball, the y pos of the player's paddle, and the y pos of the computer's paddle
     //draws the ball into the visuals
     void drawBall();
@@ -57,12 +64,19 @@ public:
 protected:
     //default ball position is (9,7) [0-indexed]
     pair<int, int> position;
+    pair<int, int> lastPos;
     bool goingRight = true;
     bool goingUp = false;
 };
 //the ball constructor
 Ball::Ball(int x, int y) {
     position = make_pair(x, y);
+    lastPos = position;
+}
+void Ball::drawBall() {
+    visuals[lastPos.first][lastPos.second] = '.';
+    visuals[position.first][position.second] = 'O';
+    lastPos = position;
 }
 
 //the paddles
@@ -81,8 +95,16 @@ protected:
 Paddle::Paddle(int pos) {
     xPos = pos;
 }
+void Paddle::drawPaddle() {
+    for (int i = 0;i < 13;i++) {
+        visuals[i + 1][xPos] = '.';
+    }
+    visuals[yPos - 1][xPos] = '#';//draw 1 above the center
+    visuals[yPos][xPos] = '#';//draw the center
+    visuals[yPos + 1][xPos] = '#';//draw 1 below the center
+}
 
-void Ball::moveBall(int horizMult = 1, int vertMult = 1, int pPos, int cPos) {
+void Ball::moveBall(int horizMult, int vertMult, int pPos, int cPos) {
     int vertDir = 1;
     int horizDir = 1;
     
@@ -138,9 +160,9 @@ protected:
 Leaderboard bestScores;
 
 void Leaderboard::printHighscores() {
-
     bool scoresPage = true;
     while (scoresPage) {
+        clear();
         cout << "     Highscores" << endl;
         for (int i = 0;i < 5;i++) {
             cout << highscores[i].first << "    " << highscores[i].second << endl;
@@ -232,7 +254,7 @@ void Leaderboard::readHighscores() {
 
 //this function inserts a new highscore into the highscore vector
 void Leaderboard::insertHighscore() {
-
+    
 }
 //removes a highscore
 void Leaderboard::removeHighscore() {
@@ -247,7 +269,7 @@ void Leaderboard::resetHighscores() {
 
 //handles the end of the game
 void gameEnd() {
-    std::
+    system("cls");//this clears the console
     cout << "Game over! Your score: " << currentScore << endl;
     if(currentScore > 0){}
 }
@@ -260,25 +282,50 @@ void gameplay() {
     Paddle player(1);
     Paddle computer(18);
     //make a ball
-    Ball ball(9,7);
+    Ball ball(7,9);
     int ballXSpeed = 1;
     int ballYSpeed = 1;
 
     visuals.clear();//remove whatever is currently in the visuals
     loadVisuals();//load visuals with the default state
+    
+    //the below section is the countdown
+    for (int i = 3; i > 0; i--) {
+        char num = i + 48;
+        clear();
+        visuals[7][9] = num;
+        printVisuals();
+        Sleep(500);
+    }
+    clear();
+    visuals[7][8] = 'G';
+    visuals[7][9] = 'O';
+    visuals[7][10] = '!';
+    printVisuals();
+    visuals.clear();
+    loadVisuals();
+    Sleep(500);
+    //the above is the countdown
+
+    cin;
+
 
     bool isPlaying = true;
+    //this while loop is the part where you actually play
     while (isPlaying) {
-        
+        clear();
+        printVisuals();
+
     }
 
     //put this part at the very end
     ball.moveBall(ballXSpeed,ballYSpeed,player.yPos,computer.yPos);
     if (ball.getPos().first < 1) {
+        isPlaying = false;
         gameEnd();
     }
     else if (ball.getPos().first > 18) {
-
+        currentScore++;
     }
 }
 
@@ -294,7 +341,7 @@ void menu() {
     
     int option = 0;
     while (option < 1 || option > 3) {
-        cout << "1. Start the game\n2. View highscores\n3.Quit" << endl;
+        cout << "1. Start the game\n2. View highscores\n3. Quit" << endl;
         cin >> option;
         if (option == 3) {
             isPlaying = false;
