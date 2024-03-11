@@ -144,6 +144,12 @@ void Ball::moveBall(int horizMult, int vertMult, Paddle& pPos, Paddle& cPos) {
 		if ((position.second == 2 && position.first >= pPos.yPos - 1 && position.first <= pPos.yPos + 1) || (position.second == 17 && position.first >= cPos.yPos - 1 && position.first <= cPos.yPos + 1)) {
 			flipHoriz();
 			paddleHits++;
+			if (position.second == 2 && position.first == pPos.yPos - 1 || position.second == 17 && position.first >= cPos.yPos - 1) {
+				setVert(true);
+			}
+			else if (position.second == 2 && position.first == pPos.yPos + 1 || position.second == 17 && position.first >= cPos.yPos + 1) {
+				setVert(false);
+			}
 		}
 
 		if (goingRight == false) {
@@ -165,6 +171,8 @@ void Ball::moveBall(int horizMult, int vertMult, Paddle& pPos, Paddle& cPos) {
 		else { vertDir = 1; }
 		position.first += vertDir;
 	}
+
+
 
 	if (position.second < 1 || position.second > 18) {
 		return;
@@ -190,6 +198,7 @@ Leaderboard bestScores;
 
 void Leaderboard::printHighscores() {
 	readHighscores();
+
 	bool scoresPage = true;
 	while (scoresPage) {
 		clear();
@@ -197,8 +206,11 @@ void Leaderboard::printHighscores() {
 		for (int i = 0;i < 5;i++) {
 			cout << highscores[i].first << "    " << highscores[i].second << endl;
 		}
+		while (highscores.size() > 5) {
+			highscores.pop_back();
+		}
+		
 		cout << endl;
-
 		int answer = 0;
 
 		cout << "What would you like to do?\n1. Delete an entry\n2. Reset all entries\n3. Return to menu\n";
@@ -231,11 +243,14 @@ void Leaderboard::printHighscores() {
 					if (tolower(cAns) == 'y') {
 						deleting = false;
 						auto iter = highscores.begin() + (iAns - 1);
+						highscores.erase(iter);
+						highscores.push_back(make_pair("None ", 0));
+						writeHighscoresFile();
 					}
 					else {
 						continue;
 					}
-
+					
 
 				}
 			}
@@ -272,6 +287,9 @@ void Leaderboard::readHighscores() {
 			string s;
 			while (std::getline(curr, s, ',')) {
 				tempVec.push_back(s);
+			}
+			if (tempVec.size() < 2) {
+				continue;
 			}
 			highscores.push_back(make_pair(tempVec[0], stoi(tempVec[1])));
 		}
@@ -315,8 +333,8 @@ void Leaderboard::resetHighscores() {
 //handles the end of the game
 void gameEnd() {
 	system("cls");//this clears the console
-	cout << "Game over! Your score: " << currentScore << endl;
 	if (currentScore > 0) {
+		cout << "Game over! Your score: " << currentScore << endl;
 		for (int i = 0; i < 5; i++) {
 			if (bestScores.getHighscores()[i].second > currentScore) {
 				continue;
@@ -332,6 +350,15 @@ void gameEnd() {
 				break;
 			}
 		}
+		if (bestScores.getHighscores()[4].second > currentScore) {
+			cout << "You did not place on the leaderboard." << endl;
+			Sleep(3000);
+		}
+
+	}
+	else {
+		cout << "Game over! You didn't score any points!" << endl;
+		Sleep(3000);
 	}
 }
 
@@ -358,6 +385,8 @@ void gameplay() {
 		initializeGameplay(ball, player, computer);
 		
 		int reactionTime = 100; //- (currentScore*5);
+		//debug
+		reactionTime = 5;
 		if (reactionTime < 250) {
 			//reactionTime = 250;
 		}
@@ -365,6 +394,8 @@ void gameplay() {
 		int delayMod = 4;
 
 		paddleHits = 0;
+
+		ballXSpeed = 1;
 
 		//this while loop is the part where you actually play
 		while (isPlaying) {
@@ -381,8 +412,8 @@ void gameplay() {
 
 			char playerInput = 'Q';
 
-			 do {
-				if (_kbhit) {
+			  while (!SleepEx(reactionTime, true)){
+				if (_kbhit()) {
 					playerInput = _getch();//this gets input from the user *without requiring the user to press enter, and will continue on it's own even with no input*
 					break;
 				}
@@ -392,7 +423,7 @@ void gameplay() {
 					continue;
 				}
 
-			 } while (!SleepEx(reactionTime, true));
+			 } ;
 
 
 
@@ -423,18 +454,18 @@ void gameplay() {
 			}
 			
 			if (rand() % delayMod == 0) {
-				if (computer.yPos < ball.getPos().first) {
+				if (computer.yPos < ball.getPos().first && computer.yPos != 12) {
 					computer.yPos++;
 				}
-				else if (computer.yPos > ball.getPos().first) {
+				else if (computer.yPos > ball.getPos().first && computer.yPos != 2) {
 					computer.yPos--;
 				}
 			}
 			else if (rand() % 3 == 0) {
-				if (computer.yPos < ball.getPos().first) {
+				if (computer.yPos < ball.getPos().first && computer.yPos != 12) {
 					computer.yPos++;
 				}
-				else if (computer.yPos > ball.getPos().first) {
+				else if (computer.yPos > ball.getPos().first && computer.yPos != 2) {
 					computer.yPos--;
 				}
 			}
@@ -487,13 +518,18 @@ void menu() {
 			bestScores.printHighscores();
 		}
 		else if (option == 3) {
-			cout << "Welcome to Pong! When you're done reading the rule, press any key to return to the menu." << endl;
+			cout << "Welcome to Pong! When you're done reading the rules, press enter to return to the menu." << endl;
 			cout << "In this version, your goal is to score as many points as possible before your opponent scores one." << endl;
 			cout << "While the computer starts off relatively slow, it will get faster as you score more points." << endl;
 			cout << "It is also recommended to zoom in, but that's not required." << endl;
 			cout << "One last thing: try to score quickly, because the ball speeds up every 6 paddle hits!" << endl;
 			cout << "Good luck!" << endl;
-			auto nada = _getch;
+			cout << endl << "Controls:\nW: Move Paddle Up\nS: Move Paddle Down\nSpace: Advance time without moving paddle" << endl;
+
+			//this is just so that you have time to read the rules
+			string nada;
+			std::getline(cin, nada);
+			std::getline(cin, nada);
 		}
 		else {
 			cout << "That's not a valid option!\n";
