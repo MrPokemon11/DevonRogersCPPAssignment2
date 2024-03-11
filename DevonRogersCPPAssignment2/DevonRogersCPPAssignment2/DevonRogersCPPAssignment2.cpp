@@ -17,16 +17,39 @@ unsigned int currentScore = 0;
 
 vector<string> visuals;
 
+void loadVisuals() {
+    ifstream baseState("BaseGameState.txt");//the default state of the game
+    string line;
+
+    if (baseState.ifstream::is_open()) {
+        while (getline(baseState, line)) {
+
+            visuals.push_back(line);
+        }
+    }
+    else {
+        cout << "Error: Default visuals not found!";
+    }
+
+    baseState.close();
+}
+
 //the ball
 class Ball {
 public:
+    Ball(int x, int y);
     void flipVert() { goingUp = !goingUp; };
     void flipHorix() { goingRight = !goingRight; };
 protected:
+    //default ball position is (11,8)
     pair<int, int> position;
     bool goingRight = true;
     bool goingUp = false;
 };
+//the ball constructor
+Ball::Ball(int x, int y) {
+    position = make_pair(x, y);
+}
 
 //the paddles
 class Paddle {
@@ -35,8 +58,8 @@ public:
     int yPos = 8;
 protected:
     int xPos;
-
     int height = 3;
+    int delay = 0; //currently only used by the computer player. since the cpu and the ball normally move at the same time scoring would be impossible for the player
 };
 //the paddle constructor
 Paddle::Paddle(int pos) {
@@ -47,14 +70,85 @@ Paddle::Paddle(int pos) {
 class Leaderboard {
 public:
     void readHighscores();
-    void writeHighScores();
     void writeHighscoresFile();
+    void printHighscores();
+    void insertHighscore();
+
     vector<pair<string, int>> getHighscores() const { return highscores; }
 protected:
     vector<pair<string, int>> highscores;
+    void removeHighscore();
+    void resetHighscores();
 };
 
 Leaderboard bestScores;
+
+void Leaderboard::printHighscores() {
+
+    bool scoresPage = true;
+    while (scoresPage) {
+        cout << "     Highscores" << endl;
+        for (int i = 0;i < 5;i++) {
+            cout << highscores[i].first << "    " << highscores[i].second << endl;
+        }
+        cout << endl;
+
+        int answer = 0;
+            
+        cout << "What would you like to do?\n1. Delete an entry\n2. Reset all entries\n3. Return to menu\n";
+        cin >> answer;
+        if (answer == 3) {
+            scoresPage = false;
+            return;
+        }
+        else if (answer == 1) {
+            int iAns = -1;
+            bool deleting = true;
+            while (deleting) {
+                cout << "Which entry do you want to delete? To cancel, enter 0.\n";
+                cin >> iAns;
+                if (iAns == 0) {
+                    deleting = false;
+                    break;
+                }
+                else if (iAns < 0 || iAns > 5) {
+                    cout << "That's not a valid entry!\n";
+                }
+                else if (highscores[iAns].first == "None") {
+                    cout << "That entry is already empty!\n";
+                }
+                else {
+                    cout << "Are you sure you want to delete entry " << iAns << "? Y/N\n";
+                    char cAns;
+                    cin >> cAns;
+                    if (tolower(cAns) == 'y') {
+                        deleting = false;
+                        auto iter = highscores.begin() + (iAns - 1);
+                    }
+                    else {
+                        continue;
+                    }
+                    
+                    
+                }
+            }
+        }
+        else if (answer == 2) {
+            cout << "Are you sure? Y/N\n";
+            char cAns;
+            cin >> cAns;
+            if (tolower(cAns) == 'y') {
+                resetHighscores();
+            }
+            else {
+                continue;
+            }
+        }
+        else {
+            "That's not a valid option!\n";
+        }
+    }
+}
 
 void Leaderboard::readHighscores() {
     //holds the highscores file
@@ -82,9 +176,19 @@ void Leaderboard::readHighscores() {
     highscoreFile.close();
 }
 
-//this function writes new highscores into the highscores vector
-void Leaderboard::writeHighScores() {
+//this function inserts a new highscore into the highscore vector
+void Leaderboard::insertHighscore() {
 
+}
+//removes a highscore
+void Leaderboard::removeHighscore() {
+
+}
+
+void Leaderboard::resetHighscores() {
+    for (int i = 0; i < 5; i++) {
+        highscores[i] = make_pair("None", 0);
+    }
 }
 
 //handles the end of the game
@@ -92,6 +196,8 @@ void gameEnd() {
     cout << "Game over! Your score: " << currentScore << endl;
     if(currentScore > 0){}
 }
+
+
 
 //the gameplay
 void gameplay() {
@@ -143,7 +249,7 @@ void Leaderboard::writeHighscoresFile() {
 
 int main()
 {
-
+    srand(time(0));
 
     while (isPlaying) {
         menu();

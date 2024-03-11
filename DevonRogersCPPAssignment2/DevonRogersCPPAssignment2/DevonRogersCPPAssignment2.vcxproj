@@ -130,6 +130,7 @@
     <ClCompile Include="DevonRogersCPPAssignment2.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="BaseGameState.txt" />
     <Text Include="highscores.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
