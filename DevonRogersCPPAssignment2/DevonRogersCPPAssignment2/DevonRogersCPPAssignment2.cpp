@@ -57,6 +57,7 @@ public:
 	Ball(int y, int x);
 	void flipVert() { goingUp = !goingUp; };
 	void flipHoriz() { goingRight = !goingRight; };
+	//remember that it is y position then x position
 	pair<int, int> getPos() const { return position; }
 	void resetPos() { position = make_pair(7, 9); }
 	void moveBall(int horizMult, int vertMult, Paddle& plyr, Paddle& cmptr);//the variables are the x speed of the ball,
@@ -66,6 +67,8 @@ public:
 
 	//chooses whether the ball goes up or down by default at random
 	void randoY();
+
+	void setVert(bool vert) { goingUp = vert; }
 protected:
 	//default ball position is (7,9) [0-indexed]
 	pair<int, int> position;
@@ -297,6 +300,7 @@ void Leaderboard::writeHighscoresFile() {
 void Leaderboard::insertHighscore(int spot, string name, int score) {
 	auto iter = highscores.begin()+spot;
 	highscores.insert(iter, make_pair(name, score));
+	highscores.pop_back();
 	writeHighscoresFile();
 }
 
@@ -358,6 +362,10 @@ void gameplay() {
 			//reactionTime = 250;
 		}
 
+		int delayMod = 4;
+
+		paddleHits = 0;
+
 		//this while loop is the part where you actually play
 		while (isPlaying) {
 		
@@ -365,13 +373,11 @@ void gameplay() {
 			printVisuals();
 
 
-			//every 5 goals the player scores, the ball speeds up. it is more likely to speed up in the y direction than the x direction
+			//every 6 paddle hits, the ball speeds up.
 			if (paddleHits % 6 == 0 && paddleHits != 0) {
 				ballXSpeed++;
 			}
 
-
-			
 
 			char playerInput = 'Q';
 
@@ -405,15 +411,33 @@ void gameplay() {
 			
 			player.drawPaddle();
 
-			int delayMod = 5;
-			if (currentScore > 12) {
+			
+			if (currentScore >= 15) {
+				delayMod = 1;
+			}
+			else if (delayMod <= 2) {
 				//do nothing
 			}
-			else if (currentScore%4 == 0 && currentScore != 0) {
+			else if (currentScore % 2 == 0 && currentScore != 0) {
 				delayMod--;
 			}
 			
-
+			if (rand() % delayMod == 0) {
+				if (computer.yPos < ball.getPos().first) {
+					computer.yPos++;
+				}
+				else if (computer.yPos > ball.getPos().first) {
+					computer.yPos--;
+				}
+			}
+			else if (rand() % 3 == 0) {
+				if (computer.yPos < ball.getPos().first) {
+					computer.yPos++;
+				}
+				else if (computer.yPos > ball.getPos().first) {
+					computer.yPos--;
+				}
+			}
 			computer.drawPaddle();
 			ball.moveBall(ballXSpeed, ballYSpeed, player, computer);
 			ball.drawBall();
@@ -448,10 +472,10 @@ void menu() {
 	cout << "Welcome to PONG! Please select an option:" << endl;
 
 	int option = 0;
-	while (option < 1 || option > 3) {
-		cout << "1. Start the game\n2. View highscores\n3. Quit" << endl;
+	while (option < 1 || option > 4) {
+		cout << "1. Start the game\n2. View highscores\n3. View the rules (recommended)\n4. Quit" << endl;
 		cin >> option;
-		if (option == 3) {
+		if (option == 4) {
 			isPlaying = false;
 			return;
 		}
@@ -461,6 +485,15 @@ void menu() {
 		}
 		else if (option == 2) {
 			bestScores.printHighscores();
+		}
+		else if (option == 3) {
+			cout << "Welcome to Pong! When you're done reading the rule, press any key to return to the menu." << endl;
+			cout << "In this version, your goal is to score as many points as possible before your opponent scores one." << endl;
+			cout << "While the computer starts off relatively slow, it will get faster as you score more points." << endl;
+			cout << "It is also recommended to zoom in, but that's not required." << endl;
+			cout << "One last thing: try to score quickly, because the ball speeds up every 6 paddle hits!" << endl;
+			cout << "Good luck!" << endl;
+			auto nada = _getch;
 		}
 		else {
 			cout << "That's not a valid option!\n";
@@ -500,6 +533,8 @@ void initializeGameplay(Ball& ball, Paddle& pc, Paddle& cpup) {
 
 int main()
 {
+	bestScores.readHighscores();
+
 	srand(time(0));
 
 	while (isPlaying) {
