@@ -416,6 +416,7 @@ void gameplay() {
 		paddleHits = 0;
 
 		ballXSpeed = 1;
+		ballYSpeed = 1;
 
 		//this while loop is the part where you actually play
 		while (isPlaying) {
@@ -427,6 +428,7 @@ void gameplay() {
 			//every 6 paddle hits, the ball speeds up.
 			if (paddleHits % 10 == 0 && paddleHits != 0) {
 				ballXSpeed++;
+				ballYSpeed++;
 			}
 
 			char playerInput = 'Q';
